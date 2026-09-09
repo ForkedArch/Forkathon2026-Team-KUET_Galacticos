@@ -1,0 +1,306 @@
+OBBOBOBOOBOOBOAOAAOOAOOB"use client";
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { 
+  BookOpen, Search, Plus, ThumbsUp, CheckCircle, MessageCircle, 
+  Mic, Image as ImageIcon, FileText, Link as LinkIcon, LogOut, 
+  AlertCircle, Clock, User, Radio
+} from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+const YEAR_TERMS = [
+  { id: "Y1T1", label: "FIRST YEAR - TERM 1" }, { id: "Y2T1", label: "SECOND YEAR - TERM 1" }
+];
+
+const AppContext = createContext<any>(null);
+
+const AppProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<any>(null); 
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [liveSessionActive] = useState(true);
+
+  useEffect(() => {
+    const initSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) await fetchUserProfile(session.user.id);
+    };
+    initSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) await fetchUserProfile(session.user.id);
+      else setUser(null);
+    });
+    return () => { authListener.subscription.unsubscribe(); };
+  }, []);
+
+  useEffect(() => {
+    if (user?.groupId) {
+      fetchCourses(user.groupId);
+      fetchQuestions(user.groupId);
+    }
+  }, [user?.groupId]);
+
+  const fetchUserProfile = async (userId: string) => {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (data) setUser({ id: data.id, role: data.role, name: data.name, groupId: data.group_id });
+  };
+
+  const fetchCourses = async (groupId: string) => {
+    const { data } = await supabase.from('courses').select('*').eq('group_id', groupId);
+    if (data) setCourses(data);
+  };
+
+  const fetchQuestions = async (groupId: string) => {
+    const { data } = await supabase.from('questions').select(`*, profiles!questions_author_id_fkey(name), answers(*, profiles!answers_teacher_id_fkey(name))`).eq('group_id', groupId).order('created_at', { ascending: false });
+    if (data) {
+      const mapped = data.map((q: any) => ({
+        ...q,
+        authorName: q.is_anonymous && q.author_id !== user?.id ? 'Anonymous Student' : q.profiles.name,
+        answers: q.answers.map((a: any) => ({ ...a, teacherName: a.profiles.name }))
+      }));
+      setQuestions(mapped);
+    }
+  };
+
+  const findSimilar = (query: string) => {
+    if (query.length < 5) return [];
+    const words = query.toLowerCase().split(' ').filter(w => w.length > 3);
+    return questions.filter(q => words.some(w => q.title.toLowerCase().includes(w))).slice(0, 3);
+  };
+
+  const addQuestion = async (qData: any) => {
+    if (user.role !== 'student') return;
+    const { error } = await supabase.from('questions').insert([{
+      author_id: user.id, group_id: user.groupId, course_code: qData.courseCode,
+      title: qData.title, description: qData.description, is_anonymous: qData.isAnonymous
+    }]);
+    if (!error) fetchQuestions(user.groupId);
+  };
+
+  const addAnswer = async (questionId: string, content: string) => {
+    if (user.role !== 'teacher') return;
+    const { error } = await supabase.from('answers').insert([{ question_id: questionId, teacher_id: user.id, content }]);
+    if (!error) fetchQuestions(user.groupId);
+  };
+
+  const toggleVote = async (questionId: string) => {
+    if (user.role !== 'student') return; 
+    const { error } = await supabase.from('question_votes').insert([{ user_id: user.id, question_id: questionId }]);
+    if (error && error.code === '23505') await supabase.from('question_votes').delete().match({ user_id: user.id, question_id: questionId });
+    fetchQuestions(user.groupId);
+  };
+
+  const toggleStatus = async (questionId: string, currentStatus: string, authorId: string) => {
+    if (user.id !== authorId) return; 
+    const newStatus = currentStatus === 'solved' ? 'unsolved' : 'solved';
+    const { error } = await supabase.from('questions').update({ status: newStatus }).eq('id', questionId);
+    if (!error) setQuestions(questions.map(q => q.id === questionId ? { ...q, status: newStatus } : q));
+  };
+
+  const updateGroup = async (groupId: string) => {
+    await supabase.from('profiles').update({ group_id: groupId }).eq('id', user.id);
+    setUser({ ...user, groupId });
+  };
+
+  return (
+    <AppContext.Provider value={{ user, setUser, questions, courses, addQuestion, addAnswer, updateGroup, toggleVote, toggleStatus, findSimilar, liveSessionActive }}>
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+const Button = ({ children, onClick, variant = 'primary', className = '', type="button", disabled=false }: any) => {
+  const base = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm";
+  const variants = { primary: "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50", secondary: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 disabled:opacity-50", ghost: "text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50" };
+  return <button type={type} onClick={onClick} disabled={disabled} className={`${base} ${variants[variant as keyof typeof variants]} ${className}`}>{children}</button>;
+};
+
+const Badge = ({ children, type = 'default' }: any) => {
+  const types = { solved: "bg-green-100 text-green-700 border-green-200", unsolved: "bg-orange-100 text-orange-700 border-orange-200", default: "bg-gray-100 text-gray-600 border-gray-200" };
+  return <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${types[type as keyof typeof types]}`}>{children}</span>;
+};
+
+const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => (
+  <div className="min-h-screen bg-slate-50 flex flex-col">
+    <header className="px-8 py-6 flex justify-between items-center bg-white border-b border-gray-100">
+      <div className="flex items-center gap-2 text-blue-600 font-bold text-xl"><BookOpen className="w-6 h-6" /> THE SILENT CLASSROOM</div>
+    </header>
+    <main className="flex-1 flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto">
+      <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">The questions students are <br/><span className="text-blue-600">afraid to ask.</span></h1>
+      <p className="text-xl text-gray-500 mb-12">Ask doubts. Find similar questions. Get answers. Learn without hesitation.</p>
+      <div className="flex gap-4">
+        <Button onClick={() => onNavigate('student-login')} className="text-lg px-8 py-4">Student Login</Button>
+        <Button variant="secondary" onClick={() => onNavigate('teacher-login')} className="text-lg px-8 py-4">Teacher Login</Button>
+      </div>
+    </main>
+  </div>
+);
+
+const AuthView = ({ role, onNavigate }: { role: 'student' | 'teacher', onNavigate: (p:string)=>void }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(''); setLoading(true);
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        if (data.user) await supabase.from('profiles').insert([{ id: data.user.id, name, role }]);
+      }
+    } catch (err: any) { setErrorMsg(err.message); } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <button onClick={() => onNavigate('landing')} className="absolute top-8 left-8 text-gray-500 hover:text-gray-800">← Back</button>
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center mb-6">{role === 'student' ? 'Student Portal' : 'Teacher Portal'}</h2>
+        {errorMsg && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{errorMsg}</div>}
+        <form onSubmit={handleAuth} className="space-y-4">
+          {!isLogin && <div><label className="block text-sm mb-1">Full Name</label><input type="text" required value={name} onChange={e=>setName(e.target.value)} className="w-full p-3 border rounded-lg" /></div>}
+          <div><label className="block text-sm mb-1">Email</label><input type="email" required value={email} onChange={e=>setEmail(e.target.value)} className="w-full p-3 border rounded-lg" /></div>
+          <div><label className="block text-sm mb-1">Password</label><input type="password" required value={password} onChange={e=>setPassword(e.target.value)} className="w-full p-3 border rounded-lg" /></div>
+          <Button type="submit" disabled={loading} className="w-full mt-2">{loading ? 'Loading...' : (isLogin ? 'Login' : 'Create Account')}</Button>
+        </form>
+        <button onClick={() => { setIsLogin(!isLogin); setErrorMsg(''); }} className="mt-4 w-full text-center text-sm text-gray-500">{isLogin ? "Sign Up" : "Login"}</button>
+      </div>
+    </div>
+  );
+};
+
+const GroupSelection = () => {
+  const { updateGroup } = useContext(AppContext);
+  const [group, setGroup] = useState('Y1T1');
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6 text-center">Select Academic Group</h2>
+        <div className="space-y-3 mb-6">
+          {YEAR_TERMS.map(t => (
+            <label key={t.id} className={`flex items-center p-4 border rounded-xl cursor-pointer ${group === t.id ? 'border-blue-600 bg-blue-50' : ''}`}>
+              <input type="radio" value={t.id} checked={group === t.id} onChange={(e) => setGroup(e.target.value)} className="hidden" />
+              <span className="font-medium">{t.label}</span>
+            </label>
+          ))}
+        </div>
+        <Button className="w-full" onClick={() => updateGroup(group)}>Continue to Dashboard</Button>
+      </div>
+    </div>
+  );
+};
+
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+  const { user, liveSessionActive } = useContext(AppContext);
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {liveSessionActive && <div className="bg-red-600 text-white px-4 py-2 flex justify-center gap-2"><Radio className="w-5 h-5 animate-pulse"/> LIVE CLASS Q&A ACTIVE</div>}
+      <header className="bg-white border-b sticky top-0 z-40 p-4 flex justify-between">
+        <h1 className="font-bold text-gray-900 flex items-center gap-2"><BookOpen className="text-blue-600"/> The Silent Classroom</h1>
+        <div className="flex items-center gap-4"><span className="text-sm font-medium">{user?.name} ({user?.role})</span><Button variant="ghost" onClick={() => supabase.auth.signOut()}><LogOut className="w-4 h-4"/></Button></div>
+      </header>
+      <main className="flex-1 max-w-6xl mx-auto w-full p-4 md:p-8">{children}</main>
+    </div>
+  );
+};
+
+const QuestionCard = ({ q, onClick }: any) => {
+  const { toggleVote, user } = useContext(AppContext);
+  return (
+    <div onClick={onClick} className="bg-white p-5 rounded-xl border shadow-sm cursor-pointer flex gap-4">
+      <div className="flex flex-col items-center gap-1">
+        <button onClick={(e) => { e.stopPropagation(); toggleVote(q.id); }} disabled={user.role !== 'student'} className="p-2 bg-gray-50 rounded-lg disabled:opacity-50"><ThumbsUp className="w-5 h-5 text-gray-400" /></button>
+        <span className="font-bold text-gray-700">{q.votes}</span>
+      </div>
+      <div>
+        <Badge type={q.status}>{q.status.toUpperCase()}</Badge>
+        <h3 className="text-lg font-bold mt-2">{q.title}</h3>
+        <p className="text-sm text-gray-500">{q.authorName} • {q.answers?.length || 0} Answers</p>
+      </div>
+    </div>
+  );
+};
+
+const QuestionDetailView = ({ q, onBack }: any) => {
+  const { user, toggleStatus, addAnswer } = useContext(AppContext);
+  const [reply, setReply] = useState('');
+  return (
+    <div className="space-y-6">
+      <button onClick={onBack} className="text-gray-500 hover:text-gray-900">← Back</button>
+      <div className="bg-white p-6 rounded-2xl border">
+        <div className="flex justify-between">
+          <Badge type={q.status}>{q.status.toUpperCase()}</Badge>
+          {user.role === 'student' && user.id === q.author_id && <Button onClick={() => toggleStatus(q.id, q.status, q.author_id)}>Toggle Status</Button>}
+        </div>
+        <h1 className="text-2xl font-bold mt-4">{q.title}</h1>
+        <p className="mt-4">{q.description}</p>
+      </div>
+      {q.answers?.map((a: any) => (
+        <div key={a.id} className="bg-blue-50 p-6 rounded-2xl border"><div className="font-bold">{a.teacherName}</div><p>{a.content}</p></div>
+      ))}
+      {user.role === 'teacher' && (
+        <form onSubmit={e => { e.preventDefault(); addAnswer(q.id, reply); setReply(''); }} className="bg-white p-4 rounded-2xl border">
+          <textarea required value={reply} onChange={e=>setReply(e.target.value)} className="w-full p-3 border rounded-lg mb-3" />
+          <Button type="submit">Submit Answer</Button>
+        </form>
+      )}
+    </div>
+  );
+};
+
+const StudentDashboard = () => {
+  const { questions } = useContext(AppContext);
+  const [viewingQ, setViewingQ] = useState<any>(null);
+  const [isAsking, setIsAsking] = useState(false);
+  if (viewingQ) return <QuestionDetailView q={viewingQ} onBack={() => setViewingQ(null)} />;
+  return (
+    <>
+      <Button onClick={() => setIsAsking(true)} className="mb-4">Ask a Question</Button>
+      <div className="grid gap-4">{questions.map((q: any) => <QuestionCard key={q.id} q={q} onClick={() => setViewingQ(q)} />)}</div>
+      {isAsking && <AskQuestionModal isOpen={isAsking} onClose={() => setIsAsking(false)} />}
+    </>
+  );
+};
+
+const AskQuestionModal = ({ isOpen, onClose }: any) => {
+  const { courses, addQuestion } = useContext(AppContext);
+  const [title, setTitle] = useState('');
+  const [desc, setDesc] = useState('');
+  const [course, setCourse] = useState(courses[0]?.code || '');
+  return isOpen ? (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <form onSubmit={e => { e.preventDefault(); addQuestion({ title, description: desc, courseCode: course }); onClose(); }} className="bg-white p-6 rounded-2xl w-full max-w-lg space-y-4">
+        <h2 className="text-xl font-bold">Ask Question</h2>
+        <select value={course} onChange={e => setCourse(e.target.value)} className="w-full p-3 border rounded-lg">{courses.map((c: any) => <option key={c.code} value={c.code}>{c.code}</option>)}</select>
+        <input required placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-3 border rounded-lg" />
+        <textarea placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} className="w-full p-3 border rounded-lg" />
+        <div className="flex gap-2"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit">Submit</Button></div>
+      </form>
+    </div>
+  ) : null;
+};
+
+const TeacherDashboard = () => {
+  const { questions } = useContext(AppContext);
+  const [viewingQ, setViewingQ] = useState<any>(null);
+  if (viewingQ) return <QuestionDetailView q={viewingQ} onBack={() => setViewingQ(null)} />;
+  return <div className="grid gap-4">{questions.map((q: any) => <QuestionCard key={q.id} q={q} onClick={() => setViewingQ(q)} />)}</div>;
+};
+
+export default function App() { return <AppProvider><AppRouter /></AppProvider>; }
+
+const AppRouter = () => {
+  const { user } = useContext(AppContext);
+  const [currentRoute, setCurrentRoute] = useState('landing');
+  if (!user) return currentRoute === 'landing' ? <LandingPage onNavigate={setCurrentRoute} /> : <AuthView role={currentRoute.includes('student') ? 'student' : 'teacher'} onNavigate={setCurrentRoute} />;
+  if (!user.groupId) return <GroupSelection />;
+  return <DashboardLayout>{user.role === 'student' ? <StudentDashboard /> : <TeacherDashboard />}</DashboardLayout>;
+};
