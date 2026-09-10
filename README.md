@@ -39,48 +39,31 @@ Think about how can you help students who are too shy to ask a question publicly
 
 A basic version only needs question posting, categories, search/filtering, and voting. More advanced teams could experiment with anonymous questions, teacher responses, tags, duplicate detection, or reputation systems.
 ### 🤔 [KUET_Galácticos]'s Understanding :
-
-**The Main Issue:**<br>
-**The Main Issue:
-
+>#The Main Issue:
+<br>
 Students stay quiet during class because they are nervous to speak up in front of others. Teachers think the class understands the lesson when it is actually just quiet. After class, students realize that many of them had the exact same question.<br><br>
-Students stay quiet during class because they are nervous to speak up in front of others. Teachers think the class understands the lesson when it is actually just quiet. After class, students realize that many of them had the exact same question.
-
-**Experience:**<br>
+#Experience:
+<br>
 As I (Rupom) am a student of CSE department. I am very introvert. We have some theoretical courses like Physics, Discrete Math, Structure Programming. Sometimes I don't understand what the teacher teaching us but I can't ask anything to the teacher because I feel very shy. For this I need to work hard later to understand the problem.<br><br>
-**Experience:
-As I (Rupom) am a student of CSE department. I am very introvert. We have some theoretical courses like Physics, Discrete Math, Structure Programming. Sometimes I don't understand what the teacher is teaching us but I can't ask anything to the teacher because of my shyness. For this I need to work hard later to understand the problem.
-
-**Our Main Goal:**<br>
+#Our Main Goal:
 Create a clean, simple tool for classes where any student can post a doubt without feeling judged, vote on other students' questions and save their valuable time.<br><br>
-**Our Main Goal:
-Create a clean, simple system for classes where any student can post a doubt without feeling judged, vote on other students' questions and save their valuable time.
-
 **Basic Features:**<br>
-**Basic Features:
 **1. Ask a Question:** 
 Let students write and submit their doubts.<br>
-Let students write and submit their doubts.
 **2. Organize by Topic:** 
 Group questions by class, subject, chapter, or topic.<br>
-Group questions by course, topic and lecture.
 **3. Browse and Search:** 
 Help students quickly find past questions before posting a new one.<br>
-Help students quickly find past questions before posting a new one.
-**4. Upvote System:** 
+**4. Upvote System:**
 Let students click "upvote" on a question if they also want to know the answer.<br>
-Let students click "upvote" on a question if they also want to know the answer.
 **5. Status Tag:** 
 Show whether a question is answered or still open.<br><br>
-Show whether a question is answered or still open.
 
 **Extra Features for Better Experience:**
 **1. Anonymous Posting:** 
 Allow students to hide their names so they feel completely safe asking anything.<br>
-Allow students to hide their names so they feel completely safe asking anything.
 **2. Duplicate Warning:** 
 Warn users if a similar question has already been posted.<br>
-Warn users if a similar question has already been posted.
 **3. Teacher Answers:** 
 Give teachers an easy way to reply directly and highlight the best answers.
 
