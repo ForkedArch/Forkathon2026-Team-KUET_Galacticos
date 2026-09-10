@@ -1,15 +1,14 @@
 <img src="https://i.ibb.co.com/7NrtB6Vv/image.png" />
-# Forkathon 2026: [Your Project Name] by [Your Team Name]
+# Forkathon 2026: [AskFlow] by [KUET_Galacticos]
 > Built for ForkedArch Freshers Hackathon 2026
 ## 👥 Teama
 
-| Name     | Roll     | Department | GitHub    |
-| -------- | -------- | ---------- | --------- |
-
-| Md. Arman Shahriar Rupom | 2K2507001 | CSE        | @Rupom2007 |
-| Abhijit Adhikary | 2K2507003 | CSE        | @abhijit-adhikary |
-| Maliha Fairoz | 2K2507089 | CSE        | @malihafairoz14 |
-| Mishuk Kumar Sarker | 2K2507018 | CSE        | @mishukdevs |
+| Name                     | Roll      | Department | GitHub            |
+| ------------------------ | --------- | ---------- | ----------------- |
+| Md. Arman Shahriar Rupom | 2K2507001 | CSE        | @Rupom2007        |
+| Abhijit Adhikary         | 2K2507003 | CSE        | @abhijit-adhikary |
+| Maliha Fairoz            | 2K2507089 | CSE        | @malihafairoz14   |
+| Mishuk Kumar Sarker      | 2K2507018 | CSE        | @mishukdevs       |
 
 ---
 
