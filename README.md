@@ -80,8 +80,6 @@ Explain the complete flow of your system.
 3.
 ---
 ## 🏗️ Architecture
-Add your architecture diagram here.
-Demo diagram added down below
 
 ```text
 kuet-galacticos/
