@@ -35,11 +35,12 @@ Search for similar questions.
 Upvote questions they also want answered.
 Mark questions as answered or unresolved.
 
-You could allow questions to be associated with a course, topic, chapter, or class.
+You could allow questions to be associated with a course, topic, chapter or class.
 
 Think about how can you help students who are too shy to ask a question publicly—and how can you prevent the same question from being asked again and again?
 
 A basic version only needs question posting, categories, search/filtering, and voting. More advanced teams could experiment with anonymous questions, teacher responses, tags, duplicate detection, or reputation systems.
+
 ### 🤔 [KUET_Galácticos]'s Understanding :
 **The Main Issue:**
 
@@ -48,8 +49,11 @@ Students stay quiet during class because they are nervous to speak up in front o
 
 As I (Rupom) am a student of CSE department. I am very introvert. We have some theoretical courses like Physics, Discrete Math, Structure Programming. Sometimes I don't understand what the teacher is teaching us but I can't ask anything to the teacher because of my shyness. For this I need to work hard later to understand the problem.
 **Our Main Goal:**
+
+
 Create a clean, simple tool for classes where any student can post a doubt without feeling judged, vote on other students' questions and save their valuable time.
 **Basic Features:**
+
 1. **Ask a Question:** 
 Let students write and submit their doubts.
 2. **Organize by Topic:** 
@@ -79,21 +83,140 @@ Explain the complete flow of your system.
 2.
 3.
 ---
-## 🏗️ Architecture
+## 🏗️ Architecture :
 
 ```text
-kuet-galacticos/
-├── app/
-│   ├── layout.tsx            # Global layout & UI wrapper
-│   ├── page.tsx              # Main dashboard / Landing UI
-│   └── globals.css           # Styling & theme configurations
-│
-├── lib/
-│   └── supabase.ts           # Supabase client, auth & DB connection
-│
-├── public/                   # Static vectors, icons & assets
-├── package.json              # Project dependencies & build scripts
-└── tsconfig.json             # TypeScript compiler configurations
-  
+## 🏗️ System Architecture :
+
+AskFlow follows a modern full-stack architecture built with Next.js and Supabase.
+
+### Architecture Overview :
+
+- **Frontend:** Next.js (React) with Tailwind CSS
+- **Backend / BaaS:** Supabase
+- **Database:** PostgreSQL
+- **Authentication:** Supabase Auth
+- **Authorization:** PostgreSQL Row Level Security (RLS)
+- **Real-time Communication:** Supabase Realtime
+- **File Storage:** Supabase Storage
+- **Semantic Search:** pgvector + local Transformers.js embeddings
+- **API Layer:** Next.js API Routes
+
+### Architecture Flow :
+
+User
+↓
+Next.js Frontend
+↓
+Supabase Client / Next.js API Routes
+↓
+Supabase
+├── PostgreSQL Database
+├── Supabase Auth
+├── Supabase Storage
+├── Supabase Realtime
+├── pgvector
+└── Row Level Security
+
+### Core Components :
+
+#### 1. Next.js Frontend
+Provides separate interfaces for:
+- Students
+- Teachers
+- Live Class Q&A
+
+The frontend communicates directly with Supabase for database operations, authentication, storage, and real-time updates.
+
+#### 2. Supabase Authentication :
+Supabase Auth manages user authentication.
+
+- Students authenticate using email and password.
+- Teachers use institutional credentials with teacher ID verification.
+- Password recovery is handled through Supabase email recovery.
+
+#### 3. PostgreSQL Database :
+Stores application data including:
+- User profiles
+- Courses
+- Questions
+- Answers
+- Votes
+- Teacher academic-group assignments
+
+#### 4. Row Level Security :
+PostgreSQL RLS enforces authorization at the database level.
+
+For example:
+- Students can modify only their own questions.
+- Students cannot answer questions.
+- Teachers can answer questions but cannot modify question status.
+- Users cannot access unauthorized academic-group data.
+
+#### 5. Semantic Question Matching :
+When a student writes a question, Transformers.js generates an embedding vector from the question content.
+
+The vector is stored and searched using PostgreSQL's `pgvector` extension to find semantically similar solved questions.
+
+This enables suggestions such as:
+
+"What is a pointer in C?"
+→ "Can someone explain what a pointer is?"
+
+rather than relying on exact keyword matching.
+
+#### 6. Suparbase Realtime :
+Supabase Realtime provides live updates for:
+- Live Class Q&A
+- New questions
+- New answers
+- Vote updates
+
+Users do not need to manually refresh the page.
+
+#### 7. Suparbase Storage :
+Attachments are stored separately from the database.
+
+Supported attachments include:
+- Images
+- PDF documents
+- Audio recordings
+
+The database stores the corresponding file path and metadata.
+
+### Data Flow :
+
+Student Question:
+
+Student
+→ Next.js UI
+→ Supabase Auth verification
+→ PostgreSQL
+→ Semantic similarity check
+→ Similar question suggestions
+→ Question published
+→ Supabase Realtime
+→ Other authorized users
+
+Teacher Answer:
+
+Teacher
+→ Teacher Dashboard
+→ PostgreSQL authorization via RLS
+→ Answer + attachments
+→ Supabase Storage
+→ Answer metadata stored in PostgreSQL
+→ Supabase Realtime
+→ Students receive the answer
+
+### Security Model:
+
+AskFlow uses a defense-in-depth security model:
+
+1. Supabase Authentication verifies user identity.
+2. User profiles determine student/teacher roles.
+3. PostgreSQL RLS enforces database-level permissions.
+4. Storage policies control attachment access.
+5. Frontend UI hides unauthorized actions, while RLS remains the actual security boundary.
 ```
 <b>Forkathon: Freshers Hackathon 2026 presented by ForkedArch powered by XtendArena</b>
