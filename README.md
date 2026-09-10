@@ -2,7 +2,12 @@
 # Forkathon 2026: [Your Project Name] by [Your Team Name]
 > Built for ForkedArch Freshers Hackathon 2026
 ## 👥 Teama
-
+| Name     | Roll     | Department | GitHub    |
+| -------- | -------- | ---------- | --------- |
+| Member 1 | 2K25XXXX | CSE        | @username |
+| Member 2 | 2K25XXXX | CSE        | @username |
+| Member 3 | 2K25XXXX | CSE        | @username |
+| Member 4 | 2K25XXXX | CSE        | @username |
 | Md. Arman Shahriar Rupom | 2K2507001 | CSE        | @Rupom2007 |
 | Abhijit Adhikary | 2K2507003 | CSE        | @abhijit-adhikary |
 | Maliha Fairoz | 2K2507089 | CSE        | @malihafairoz14 |
