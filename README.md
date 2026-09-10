@@ -76,7 +76,7 @@ Give teachers an easy way to reply directly and highlight the best answers.
 ---
 ## 💡 Our Solution
 ### Overview
-Describe your proposed solution.
+We will make a QnA environment where students can ask questions to their teachers anonymously.
 ### How It Works
 Explain the complete flow of your system.
 1.
