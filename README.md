@@ -85,38 +85,27 @@ Explain the complete flow of your system.
 ---
 ## 🏗️ Architecture :
 
-```text
-Q&A Platform Data Architecture & Workflow
+```mermaid
+graph TD
+    subgraph Auth & Identity
+        U[auth.users] --> S[students]
+        U --> T[teachers]
+    end
 
-// Core Entities & Identity
-+ auth.users (id)
-|   +-- teachers (id) <-> (auth.users.id) [1:1]
-|   +-- students (id) <-> (auth.users.id) [1:1]
+    subgraph Curriculum
+        T -->|taught_by| C[courses]
+    end
 
-// Curriculum
-+ courses (id)
-|   +-- taught_by -> teachers (id)
+    subgraph Interaction Flow
+        S -->|asks| Q[questions]
+        C -->|target_course| Q
+        S -->|casts| V[votes]
+        V --> Q
+        Q -->|contains| M[messages]
+    end
 
-// Interaction Flow & Content
-+ questions (id)
-|   +-- asker -> students (id)
-|   +-- target_course -> courses (id)
-
-+ messages (id)
-|   +-- part_of -> questions (id)
-|   +-- sender_type -> student / teacher
-
-+ votes (id)
-|   +-- cast_on -> questions (id)
-|   +-- by_student -> students (id)
-
-// System Notifications
-+ notifications (id)
-|   +-- recipient -> auth.users (id)
-
-// Workflow Summary
-Student -- asks --> Question -- in --> Course -- taught_by --> Teacher
-Teacher -- replies --> Message -- in --> Question
-System -- triggers --> Notification -- to --> User
+    subgraph Notifications
+        U -->|recipient| N[notifications]
+    end
 ```
 <b>Forkathon: Freshers Hackathon 2026 presented by ForkedArch powered by XtendArena</b>
