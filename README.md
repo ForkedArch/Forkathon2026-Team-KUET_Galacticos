@@ -7,7 +7,7 @@
 🌐 Website link : https://nevermind-rpmi.vercel.app/
 
 
-Presentation link :https://youtu.be/_AaB1BakwQ4
+Presentation link :https://youtu.be/r1GbUpSntNc
 
 
 Google drive link :https://drive.google.com/drive/folders/1DMww6xx2e8U0sAzibFMA-dv3sS8sr0Ii?usp=drive_link
