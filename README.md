@@ -254,3 +254,12 @@ No external API call, no network latency, no key to manage — chosen specifical
 * Cross-course search
 * Semantic (embedding-based) search — stretch goal only
 Arena</b>
+
+
+## 📜 License :
+
+This project is open-sourced under the [MIT License](https://opensource.org/licenses/MIT).
+
+<p align="center">
+  <strong>Forkathon: Freshers Hackathon 2026 presented by ForkedArch powered by XtendArena</strong>
+</p>
