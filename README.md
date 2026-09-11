@@ -87,7 +87,7 @@ Explain the complete flow of your system.
 
 # 🏛️ AskFlow — Architecture
 
-This document explains how AskFlow is put together: system layers, data model, the status state machine, and the two integrity rules the whole product depends on (anonymity, and "teachers can't self-grade their own answers")[cite: 3].
+This document explains how AskFlow is put together: system layers, data model, the status state machine, and the two integrity rules the whole product depends on (anonymity, and "teachers can't self-grade their own answers").
 
 ---
 
@@ -95,7 +95,7 @@ This document explains how AskFlow is put together: system layers, data model, t
 
 ```mermaid
 flowchart TB
-    subgraph Client["Frontend (Antigravity-generated)"]
+    subgraph Client["Frontend"]
         SA["Student App"]
         TA["Teacher App"]
     end
@@ -122,7 +122,7 @@ flowchart TB
     Realtime -- "new message / notification / vote count" --> TA
 ```
 
-**The one rule that matters most:** clients can *read* the database directly (scoped down by RLS), but they can never *write* to `questions.status` directly[cite: 3]. Every state change — posting a reply, confirming "solved," casting a vote — goes through a `security definer` RPC function that checks who's calling before it touches anything[cite: 3]. 
+**The one rule that matters most:** clients can *read* the database directly (scoped down by RLS), but they can never *write* to `questions.status` directly. Every state change — posting a reply, confirming "solved," casting a vote — goes through a `security definer` RPC function that checks who's calling before it touches anything[cite: 3]. 
 
 ---
 
@@ -190,7 +190,7 @@ erDiagram
     }
 ```
 
-**Why `course_code` (not name) is the unique key:** the catalog has multiple courses literally named "Machine Learning" in different years/terms (CSE4109, CSE4111, CSE4211)[cite: 3]. They are deliberately kept as separate rows — merging by name would silently collapse three different courses, with three different teachers, into one[cite: 3].
+**Why `course_code` (not name) is the unique key:** the catalog has multiple courses literally named "Machine Learning" in different years/terms (CSE4109, CSE4111, CSE4211). They are deliberately kept as separate rows — merging by name would silently collapse three different courses, with three different teachers, into one.
 
 ---
 
@@ -206,20 +206,20 @@ flowchart LR
     Rank --> Results["Top 5–10 matches shown live"]
 ```
 
-No external API call, no network latency, no key to manage — chosen specifically so a live demo can't stall on a third-party service[cite: 3]. 
+No external API call, no network latency, no key to manage — chosen specifically so a live demo can't stall on a third-party service. 
 
 ---
 
 ## 4. Security Model (Two Enforcement Layers)
 
 1. **Row Level Security (every table):**
-   * A student can only ever `SELECT` questions in their own year/term's courses; a teacher only their one assigned course[cite: 3].
-   * No table policy ever returns a student's name/roll/email to a peer or to the teacher's list view[cite: 3].
-   * `UPDATE` on `questions.status` is blocked entirely at the RLS layer for ordinary client writes[cite: 3].
+   * A student can only ever `SELECT` questions in their own year/term's courses; a teacher only their one assigned course.
+   * No table policy ever returns a student's name/roll/email to a peer or to the teacher's list view.
+   * `UPDATE` on `questions.status` is blocked entirely at the RLS layer for ordinary client writes.
 2. **RPC functions (`security definer`):** the only path that can change state[cite: 3]. Each function re-checks the caller's identity server-side before acting:
-   * `post_teacher_reply` — only the course's assigned teacher; flips status to `answered`[cite: 3].
-   * `mark_question_solved` — only the asking student[cite: 3].
-   * `get_question_thread` — the *only* place a student's real name is ever returned, and only to the assigned teacher[cite: 3].
+   * `post_teacher_reply` — only the course's assigned teacher; flips status to `answered`.
+   * `mark_question_solved` — only the asking student.
+   * `get_question_thread` — the *only* place a student's real name is ever returned, and only to the assigned teacher.
 
 ---
 
@@ -227,17 +227,17 @@ No external API call, no network latency, no key to manage — chosen specifical
 
 | Channel | Filtered by | Drives |
 |---|---|---|
-| `messages` | `question_id` | Live chat thread updates[cite: 3] |
-| `notifications` | `recipient_id` | Notification bell badge[cite: 3] |
-| `questions` | `course_id` | Live vote-count/status re-sorting on both dashboards[cite: 3] |
+| `messages` | `question_id` | Live chat thread updates |
+| `notifications` | `recipient_id` | Notification bell badge |
+| `questions` | `course_id` | Live vote-count/status re-sorting on both dashboards |
 
 ---
 
 ## 6. Out of Scope (MVP)
 
-* Speech-to-text on voice messages (audio is stored and played back, not transcribed)[cite: 3]
-* One teacher assigned to more than one course[cite: 3]
-* Admin/moderation role[cite: 3]
-* Cross-course search[cite: 3]
-* Semantic (embedding-based) search — stretch goal only[cite: 3]
+* Speech-to-text on voice messages (audio is stored and played back, not transcribed)
+* One teacher assigned to more than one course
+* Admin/moderation role
+* Cross-course search
+* Semantic (embedding-based) search — stretch goal only
 Arena</b>
