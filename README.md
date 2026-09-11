@@ -3,6 +3,15 @@
 
 **Built for ForkedArch Freshers Hackathon 2026**
 
+
+🌐 Website link : https://nevermind-rpmi.vercel.app/
+
+
+Presentation link :https://youtu.be/_AaB1BakwQ4
+
+
+Google drive link :https://drive.google.com/drive/folders/1DMww6xx2e8U0sAzibFMA-dv3sS8sr0Ii?usp=drive_link
+
  
 ## **👥 Team :**
 
@@ -43,6 +52,7 @@ Think about how can you help students who are too shy to ask a question publicly
 A basic version only needs question posting, categories, search/filtering, and voting. More advanced teams could experiment with anonymous questions, teacher responses, tags, duplicate detection, or reputation systems.
 
 ### 🤔 [KUET_Galácticos]'s Understanding :
+
 **The Main Issue:**<br>
 Students stay quiet during class because they are nervous to speak up in front of others. Teachers think the class understands the lesson when it is actually just quiet. After class, students realize that many of them had the exact same question.<br><br>
 **Experience:**<br>
