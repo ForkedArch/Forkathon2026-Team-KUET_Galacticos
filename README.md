@@ -1,5 +1,5 @@
 <img src="https://i.ibb.co.com/7NrtB6Vv/image.png" />
-#Forkathon 2026: [AskFlow] by [KUET_Galacticos]
+#Forkathon 2026: [AskFlow] by [KUET_Galácticos]
 
  **Built for ForkedArch Freshers Hackathon 2026**
  
@@ -9,8 +9,8 @@
 | ------------------------ | --------- | ---------- | ----------------- |
 | Md. Arman Shahriar Rupom | 2K2507001 | CSE        | @Rupom2007        |
 | Abhijit Adhikary         | 2K2507003 | CSE        | @abhijit-adhikary |
-| Maliha Fairoz            | 2K2507089 | CSE        | @malihafairoz14   |
 | Mishuk Kumar Sarker      | 2K2507018 | CSE        | @mishukdevs       |
+| Maliha Fairoz            | 2K2507089 | CSE        | @malihafairoz14   |
 
 ---
 
@@ -42,15 +42,11 @@ Think about how can you help students who are too shy to ask a question publicly
 A basic version only needs question posting, categories, search/filtering, and voting. More advanced teams could experiment with anonymous questions, teacher responses, tags, duplicate detection, or reputation systems.
 
 ### 🤔 [KUET_Galácticos]'s Understanding :
-**The Main Issue:**
-
+**The Main Issue:**<br>
 Students stay quiet during class because they are nervous to speak up in front of others. Teachers think the class understands the lesson when it is actually just quiet. After class, students realize that many of them had the exact same question.<br><br>
-**Experience:**
-
-As I (Rupom) am a student of CSE department. I am very introvert. We have some theoretical courses like Physics, Discrete Math, Structure Programming. Sometimes I don't understand what the teacher is teaching us but I can't ask anything to the teacher because of my shyness. For this I need to work hard later to understand the problem.
-**Our Main Goal:**
-
-
+**Experience:**<br>
+As I (Rupom) am a student of CSE department. I am very introvert. We have some theoretical courses like Physics, Discrete Math, Structure Programming. Sometimes I don't understand what the teacher is teaching us but I can't ask anything to the teacher because of my shyness. For this I need to work hard later to understand the problem.<br><br>
+**Our Main Goal:**<br>
 Create a clean, simple tool for classes where any student can post a doubt without feeling judged, vote on other students' questions and save their valuable time.
 
 ## Key Features :
@@ -232,7 +228,7 @@ No external API call, no network latency, no key to manage — chosen specifical
    * A student can only ever `SELECT` questions in their own year/term's courses; a teacher only their one assigned course.
    * No table policy ever returns a student's name/roll/email to a peer or to the teacher's list view.
    * `UPDATE` on `questions.status` is blocked entirely at the RLS layer for ordinary client writes.
-2. **RPC functions (`security definer`):** the only path that can change state[cite: 3]. Each function re-checks the caller's identity server-side before acting:
+2. **RPC functions (`security definer`):** the only path that can change state. Each function re-checks the caller's identity server-side before acting:
    * `post_teacher_reply` — only the course's assigned teacher; flips status to `answered`.
    * `mark_question_solved` — only the asking student.
    * `get_question_thread` — the *only* place a student's real name is ever returned, and only to the assigned teacher.
