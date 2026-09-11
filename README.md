@@ -85,27 +85,31 @@ Explain the complete flow of your system.
 ---
 ## 🏗️ Architecture :
 
-```mermaid
-graph TD
-    subgraph Auth & Identity
-        U[auth.users] --> S[students]
-        U --> T[teachers]
-    end
+```text
++-------------------------------------------------------+
+|                     auth.users                        |
++-------------------------------------------------------+
+           |                                     |
+           v                                     v
++-------------+                       +-------------+
+|  students   |                       |  teachers   |
++-------------+                       +-------------+
+           |                                     |
+           | (asks)                              | (teaches)
+           v                                     v
++-----------------------+             +-----------------+
+|       questions       | <---------- |     courses     |
++-----------------------+             +-----------------+
+        |               |
+        | (has replies) | (has votes)
+        v               v
++-----------+   +-----------+
+| messages  |   |   votes   |
++-----------+   +-----------+
+        |
+        v
++-------------------+
+|   notifications   | --> (alerts users)
++-------------------+
 
-    subgraph Curriculum
-        T -->|taught_by| C[courses]
-    end
-
-    subgraph Interaction Flow
-        S -->|asks| Q[questions]
-        C -->|target_course| Q
-        S -->|casts| V[votes]
-        V --> Q
-        Q -->|contains| M[messages]
-    end
-
-    subgraph Notifications
-        U -->|recipient| N[notifications]
-    end
-```
 <b>Forkathon: Freshers Hackathon 2026 presented by ForkedArch powered by XtendArena</b>
