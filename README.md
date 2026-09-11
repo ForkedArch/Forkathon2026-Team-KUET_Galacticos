@@ -86,137 +86,37 @@ Explain the complete flow of your system.
 ## 🏗️ Architecture :
 
 ```text
-## 🏗️ System Architecture :
+Q&A Platform Data Architecture & Workflow
 
-AskFlow follows a modern full-stack architecture built with Next.js and Supabase.
+// Core Entities & Identity
++ auth.users (id)
+|   +-- teachers (id) <-> (auth.users.id) [1:1]
+|   +-- students (id) <-> (auth.users.id) [1:1]
 
-### Architecture Overview :
+// Curriculum
++ courses (id)
+|   +-- taught_by -> teachers (id)
 
-- **Frontend:** Next.js (React) with Tailwind CSS
-- **Backend / BaaS:** Supabase
-- **Database:** PostgreSQL
-- **Authentication:** Supabase Auth
-- **Authorization:** PostgreSQL Row Level Security (RLS)
-- **Real-time Communication:** Supabase Realtime
-- **File Storage:** Supabase Storage
-- **Semantic Search:** pgvector + local Transformers.js embeddings
-- **API Layer:** Next.js API Routes
+// Interaction Flow & Content
++ questions (id)
+|   +-- asker -> students (id)
+|   +-- target_course -> courses (id)
 
-### Architecture Flow :
++ messages (id)
+|   +-- part_of -> questions (id)
+|   +-- sender_type -> student / teacher
 
-User
-↓
-Next.js Frontend
-↓
-Supabase Client / Next.js API Routes
-↓
-Supabase
-├── PostgreSQL Database
-├── Supabase Auth
-├── Supabase Storage
-├── Supabase Realtime
-├── pgvector
-└── Row Level Security
++ votes (id)
+|   +-- cast_on -> questions (id)
+|   +-- by_student -> students (id)
 
-### Core Components :
+// System Notifications
++ notifications (id)
+|   +-- recipient -> auth.users (id)
 
-#### 1. Next.js Frontend
-Provides separate interfaces for:
-- Students
-- Teachers
-- Live Class Q&A
-
-The frontend communicates directly with Supabase for database operations, authentication, storage, and real-time updates.
-
-#### 2. Supabase Authentication :
-Supabase Auth manages user authentication.
-
-- Students authenticate using email and password.
-- Teachers use institutional credentials with teacher ID verification.
-- Password recovery is handled through Supabase email recovery.
-
-#### 3. PostgreSQL Database :
-Stores application data including:
-- User profiles
-- Courses
-- Questions
-- Answers
-- Votes
-- Teacher academic-group assignments
-
-#### 4. Row Level Security :
-PostgreSQL RLS enforces authorization at the database level.
-
-For example:
-- Students can modify only their own questions.
-- Students cannot answer questions.
-- Teachers can answer questions but cannot modify question status.
-- Users cannot access unauthorized academic-group data.
-
-#### 5. Semantic Question Matching :
-When a student writes a question, Transformers.js generates an embedding vector from the question content.
-
-The vector is stored and searched using PostgreSQL's `pgvector` extension to find semantically similar solved questions.
-
-This enables suggestions such as:
-
-"What is a pointer in C?"
-→ "Can someone explain what a pointer is?"
-
-rather than relying on exact keyword matching.
-
-#### 6. Suparbase Realtime :
-Supabase Realtime provides live updates for:
-- Live Class Q&A
-- New questions
-- New answers
-- Vote updates
-
-Users do not need to manually refresh the page.
-
-#### 7. Suparbase Storage :
-Attachments are stored separately from the database.
-
-Supported attachments include:
-- Images
-- PDF documents
-- Audio recordings
-
-The database stores the corresponding file path and metadata.
-
-### Data Flow :
-
-Student Question:
-
-Student
-→ Next.js UI
-→ Supabase Auth verification
-→ PostgreSQL
-→ Semantic similarity check
-→ Similar question suggestions
-→ Question published
-→ Supabase Realtime
-→ Other authorized users
-
-Teacher Answer:
-
-Teacher
-→ Teacher Dashboard
-→ PostgreSQL authorization via RLS
-→ Answer + attachments
-→ Supabase Storage
-→ Answer metadata stored in PostgreSQL
-→ Supabase Realtime
-→ Students receive the answer
-
-### Security Model:
-
-AskFlow uses a defense-in-depth security model:
-
-1. Supabase Authentication verifies user identity.
-2. User profiles determine student/teacher roles.
-3. PostgreSQL RLS enforces database-level permissions.
-4. Storage policies control attachment access.
-5. Frontend UI hides unauthorized actions, while RLS remains the actual security boundary.
+// Workflow Summary
+Student -- asks --> Question -- in --> Course -- taught_by --> Teacher
+Teacher -- replies --> Message -- in --> Question
+System -- triggers --> Notification -- to --> User
 ```
 <b>Forkathon: Freshers Hackathon 2026 presented by ForkedArch powered by XtendArena</b>
