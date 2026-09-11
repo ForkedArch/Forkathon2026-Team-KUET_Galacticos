@@ -1,5 +1,5 @@
 <img src="https://i.ibb.co.com/7NrtB6Vv/image.png" />
-## **Forkathon 2026: [AskFlow] by [KUET_Galácticos]**
+## **Forkathon 2026: AskFlow by KUET_Galácticos**
 
 **Built for ForkedArch Freshers Hackathon 2026**
 
