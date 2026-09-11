@@ -85,31 +85,159 @@ Explain the complete flow of your system.
 ---
 ## 🏗️ Architecture :
 
-```text
-+-------------------------------------------------------+
-|                     auth.users                        |
-+-------------------------------------------------------+
-           |                                     |
-           v                                     v
-    +-------------+                       +-------------+
-    |  students   |                       |  teachers   |
-    +-------------+                       +-------------+
-           |                                     |
-           | (asks)                              | (teaches)
-           v                                     v
- +-----------------------+               +-----------------+
- |       questions       | <------------ |     courses     |
- +-----------------------+               +-----------------+
-        |               |
-        | (has replies) | (has votes)
-        v               v
-  +-----------+   +-----------+
-  | messages  |   |   votes   |
-  +-----------+   +-----------+
-        |
-        v
-+-------------------+
-|   notifications   | --> (alerts users)
-+-------------------+
+# 🏛️ AskFlow — Architecture
+
+This document explains how AskFlow is put together: system layers, data model, the status state machine, and the two integrity rules the whole product depends on (anonymity, and "teachers can't self-grade their own answers")[cite: 3].
+
+---
+
+## 1. System Overview
+
+```mermaid
+flowchart TB
+    subgraph Client["Frontend (Antigravity-generated)"]
+        SA["Student App"]
+        TA["Teacher App"]
+    end
+
+    subgraph Supabase["Supabase Backend"]
+        Auth["Auth\n(email + password)"]
+        RPC["Security-definer RPC functions\n(the ONLY way to change state)"]
+        DB[("Postgres\nRLS enabled on every table")]
+        Storage["Storage\n(images / audio / PDF)"]
+        Realtime["Realtime channels"]
+    end
+
+    SA -- "sign in / sign up" --> Auth
+    TA -- "sign in / sign up" --> Auth
+    SA -- "ask, search, vote, confirm-solved" --> RPC
+    TA -- "reply to question" --> RPC
+    RPC --> DB
+    SA -. "direct read (RLS-scoped)" .-> DB
+    TA -. "direct read (RLS-scoped)" .-> DB
+    SA -- "upload attachment" --> Storage
+    TA -- "upload attachment" --> Storage
+    DB -- "live updates" --> Realtime
+    Realtime -- "new message / notification / vote count" --> SA
+    Realtime -- "new message / notification / vote count" --> TA
 ```
-<b>Forkathon: Freshers Hackathon 2026 presented by ForkedArch powered by XtendArena</b>
+
+**The one rule that matters most:** clients can *read* the database directly (scoped down by RLS), but they can never *write* to `questions.status` directly[cite: 3]. Every state change — posting a reply, confirming "solved," casting a vote — goes through a `security definer` RPC function that checks who's calling before it touches anything[cite: 3]. 
+
+---
+
+## 2. Data Model
+
+```mermaid
+erDiagram
+    COURSES ||--o| TEACHERS : "assigned to (1:1)"
+    COURSES ||--o{ QUESTIONS : "has"
+    STUDENTS ||--o{ QUESTIONS : "asks"
+    QUESTIONS ||--o{ MESSAGES : "thread"
+    QUESTIONS ||--o{ VOTES : "receives"
+    STUDENTS ||--o{ VOTES : "casts"
+    QUESTIONS ||--o{ NOTIFICATIONS : "triggers"
+
+    COURSES {
+        uuid id PK
+        text course_code UK
+        text course_name
+        int year
+        int term
+        text teacher_id UK
+    }
+    TEACHERS {
+        uuid id PK
+        text name
+        text email UK
+        text teacher_id UK
+        uuid course_id UK
+    }
+    STUDENTS {
+        uuid id PK
+        text name
+        text roll_number
+        text email UK
+        int year
+        int term
+    }
+    QUESTIONS {
+        uuid id PK
+        uuid student_id FK
+        uuid course_id FK
+        text body
+        text status
+        int vote_count
+    }
+    MESSAGES {
+        uuid id PK
+        uuid question_id FK
+        text sender_type
+        uuid sender_id
+        text body
+    }
+    VOTES {
+        uuid id PK
+        uuid question_id FK
+        uuid student_id FK
+    }
+    NOTIFICATIONS {
+        uuid id PK
+        text recipient_type
+        uuid recipient_id
+        uuid question_id FK
+        boolean is_read
+    }
+```
+
+**Why `course_code` (not name) is the unique key:** the catalog has multiple courses literally named "Machine Learning" in different years/terms (CSE4109, CSE4111, CSE4211)[cite: 3]. They are deliberately kept as separate rows — merging by name would silently collapse three different courses, with three different teachers, into one[cite: 3].
+
+---
+
+## 3. Search & Duplicate Detection
+
+```mermaid
+flowchart LR
+    Type["Student types in\n'Ask your doubt'"] --> Debounce["Debounced query"]
+    Debounce --> FTS["Postgres full-text search\n(tsvector/tsquery)"]
+    Debounce --> Trgm["pg_trgm trigram\nsimilarity"]
+    FTS --> Rank["Combined ranked results\n(scoped to selected course)"]
+    Trgm --> Rank
+    Rank --> Results["Top 5–10 matches shown live"]
+```
+
+No external API call, no network latency, no key to manage — chosen specifically so a live demo can't stall on a third-party service[cite: 3]. 
+
+---
+
+## 4. Security Model (Two Enforcement Layers)
+
+1. **Row Level Security (every table):**
+   * A student can only ever `SELECT` questions in their own year/term's courses; a teacher only their one assigned course[cite: 3].
+   * No table policy ever returns a student's name/roll/email to a peer or to the teacher's list view[cite: 3].
+   * `UPDATE` on `questions.status` is blocked entirely at the RLS layer for ordinary client writes[cite: 3].
+2. **RPC functions (`security definer`):** the only path that can change state[cite: 3]. Each function re-checks the caller's identity server-side before acting:
+   * `post_teacher_reply` — only the course's assigned teacher; flips status to `answered`[cite: 3].
+   * `mark_question_solved` — only the asking student[cite: 3].
+   * `get_question_thread` — the *only* place a student's real name is ever returned, and only to the assigned teacher[cite: 3].
+
+---
+
+## 5. Realtime Channels
+
+| Channel | Filtered by | Drives |
+|---|---|---|
+| `messages` | `question_id` | Live chat thread updates[cite: 3] |
+| `notifications` | `recipient_id` | Notification bell badge[cite: 3] |
+| `questions` | `course_id` | Live vote-count/status re-sorting on both dashboards[cite: 3] |
+
+---
+
+## 6. Out of Scope (MVP)
+
+* Speech-to-text on voice messages (audio is stored and played back, not transcribed)[cite: 3]
+* One teacher assigned to more than one course[cite: 3]
+* Admin/moderation role[cite: 3]
+* Cross-course search[cite: 3]
+* Semantic (embedding-based) search — stretch goal only[cite: 3]
+Arena</b>
