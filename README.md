@@ -52,46 +52,62 @@ As I (Rupom) am a student of CSE department. I am very introvert. We have some t
 
 
 Create a clean, simple tool for classes where any student can post a doubt without feeling judged, vote on other students' questions and save their valuable time.
-**Basic Features:**
 
-1. **Ask a Question:** 
-Let students write and submit their doubts.
-2. **Organize by Topic:** 
-Group questions by class, subject, chapter, or topic.
-3. **Browse and Search:** 
-Help students quickly find past questions before posting a new one.
-4. **Upvote System:**
-Let students click "upvote" on a question if they also want to know the answer.
-5. **Status Tag:** 
-Show whether a question is answered or still open.
+## Key Features :
 
-**Extra Features for Better Experience:**
-1. **Anonymous Posting:** 
-Allow students to hide their names so they feel completely safe asking anything.
-2. **Duplicate Warning:** 
-Warn users if a similar question has already been posted.
-3. **Teacher Answers:** 
-Give teachers an easy way to reply directly and highlight the best answers.
+### For Students :
+* **Anonymous Q&A:** Ask questions without revealing your identity to peers.
+* **Smart Search:** Find existing questions instantly using fuzzy and full-text search to avoid duplicates.
+* **Upvoting System:** Upvote other students' questions to push them up the teacher's priority list.
+* **Rich Media Attachments:** Support for text, images, audio recordings (playback only), and PDFs.
+* **Status Control:** Only the student who asked the question can mark it as officially "Solved" once satisfied.
+* **Live Notifications:** Get instantly notified when a teacher replies to your doubt.
 
+### For Teachers :
+* **Course-Specific Dashboard:** A streamlined queue showing questions strictly for the teacher's assigned course.
+* **Smart Filtering:** Sort questions easily by **Top Voted**, **Unsolved**, and **Solved**.
+* **1-on-1 Chat Threads:** Answer student doubts in a private, messenger-style thread.
+* **Contextual Identity:** View the student's real name *only* inside the private thread for personalized guidance.
+
+### Core System & Security :
+* **Role-Based Auth:** Secure sign-in for Students and Teachers (via Supabase Auth).
+* **Real-Time Sync:** Live updates for chat threads, vote counts, and notifications via Supabase Realtime.
+* **Rock-Solid Privacy:** Anonymity and data protection are strictly enforced at the database level using Postgres Row Level Security (RLS).
 ---
-## 💡 Our Solution
-### Overview
-We will make a QnA environment where students can ask questions to their teachers anonymously.
-### How It Works
-Explain the complete flow of your system.
-1.
-2.
-3.
----
+## 💡 Our Solution :
+## Solution Overview :
+
+AskFlow is a two-sided, anonymous Q&A platform designed specifically for university classrooms to eliminate the fear of asking "dumb" questions and to reduce repetitive queries. 
+Students can post academic doubts anonymously to their peers, search past questions to avoid duplicates, and upvote existing questions. Teachers get a streamlined, prioritized feed of questions for their assigned course and reply in a dedicated, private chat thread. By hiding student identities from the public feed and giving students the final say on when a doubt is "Solved," AskFlow creates a safe and highly efficient learning environment.
+
+### How It Works :
+
+### For Students :
+*   **Ask Anonymously:** Post questions using text, images, audio recordings, or PDFs. Your identity is completely hidden from your classmates.
+*   **Smart Search & Upvote:** Before asking, use the search bar to find similar questions (powered by Postgres full-text and fuzzy search). If your doubt is already there, simply upvote it to push it to the top of the teacher's queue!
+*   **Own the Solution:** When a teacher replies, your question automatically becomes **"Answered"**. Only *you* can click the green checkmark (✓) to officially mark it as **"Solved"** once you are completely satisfied with the explanation.
+
+### For Teachers :
+*   **Focused Dashboard:** Teachers are assigned 1:1 to their specific course and see a dedicated queue of student questions.
+*   **Prioritized Feed:** Easily filter the feed by **Top Voted**, **Unsolved**, and **Solved** to address the most pressing issues first.
+*   **1-on-1 Chat Threads:** Reply to questions in a direct, messenger-style thread. Inside the private thread, the teacher can see the asking student's real name to provide personalized guidance.
+
+### Under the Hood :
+*   **Tech Stack:** Built on Google Antigravity and Supabase (Postgres, Auth, Storage).
+*   **Real-time Updates:** Chat threads, notifications, and vote counts update instantly using Supabase Realtime.
+*   **Strict Privacy:** Student anonymity isn't just hidden in the UI; it is strictly enforced at the database layer using Postgres Row Level Security (RLS).
+*   **Status Lifecycle:** State changes (Unsolved → Answered → Solved) are handled securely via backend database functions.
+
+
 ## 🏗️ Architecture :
 
-# 🏛️ AskFlow — Architecture
+# 🏛️ AskFlow — Architecture :
 
 This document explains how AskFlow is put together: system layers, data model, the status state machine, and the two integrity rules the whole product depends on (anonymity, and "teachers can't self-grade their own answers").
 
 ---
 
-## 1. System Overview
+## 1. System Overview :
 
 ```mermaid
 flowchart TB
@@ -122,11 +138,11 @@ flowchart TB
     Realtime -- "new message / notification / vote count" --> TA
 ```
 
-**The one rule that matters most:** clients can *read* the database directly (scoped down by RLS), but they can never *write* to `questions.status` directly. Every state change — posting a reply, confirming "solved," casting a vote — goes through a `security definer` RPC function that checks who's calling before it touches anything[cite: 3]. 
+**The one rule that matters most:** clients can *read* the database directly (scoped down by RLS), but they can never *write* to `questions.status` directly. Every state change — posting a reply, confirming "solved," casting a vote — goes through a `security definer` RPC function that checks who's calling before it touches anything. 
 
 ---
 
-## 2. Data Model
+## 2. Data Model :
 
 ```mermaid
 erDiagram
@@ -194,7 +210,7 @@ erDiagram
 
 ---
 
-## 3. Search & Duplicate Detection
+## 3. Search & Duplicate Detection :
 
 ```mermaid
 flowchart LR
@@ -210,7 +226,7 @@ No external API call, no network latency, no key to manage — chosen specifical
 
 ---
 
-## 4. Security Model (Two Enforcement Layers)
+## 4. Security Model (Two Enforcement Layers) :
 
 1. **Row Level Security (every table):**
    * A student can only ever `SELECT` questions in their own year/term's courses; a teacher only their one assigned course.
@@ -223,7 +239,7 @@ No external API call, no network latency, no key to manage — chosen specifical
 
 ---
 
-## 5. Realtime Channels
+## 5. Realtime Channels :
 
 | Channel | Filtered by | Drives |
 |---|---|---|
@@ -233,7 +249,7 @@ No external API call, no network latency, no key to manage — chosen specifical
 
 ---
 
-## 6. Out of Scope (MVP)
+## 6. Out of Scope (MVP) :
 
 * Speech-to-text on voice messages (audio is stored and played back, not transcribed)
 * One teacher assigned to more than one course
